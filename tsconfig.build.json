@@ -1,8 +1,2 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "rootDir": "./src"
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
-}
+// Configuración usada exclusivamente al compilar: excluye tests y artefactos que no deben ir a dist/.
+{"extends":"./tsconfig.json","exclude":["node_modules","test","dist","**/*.spec.ts"]}
