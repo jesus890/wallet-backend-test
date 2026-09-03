@@ -1,0 +1,57 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: wallet-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: wallet
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "db.adminCommand('ping').ok"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  seed:
+    build: .
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/wallet
+    command:
+      [
+        "node",
+        "dist/scripts/seed.js"
+      ]
+    restart: "no"
+
+  api:
+    build: .
+    container_name: wallet-api
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    environment:
+      PORT: 3000
+      MONGODB_URI: mongodb://mongo:27017/wallet
+      CURSOR_SECRET: docker-compose-development-secret-change-in-production
+      IDEMPOTENCY_TTL_SECONDS: 600
+    ports:
+      - "3000:3000"
+
+volumes:
+  mongo_data:
